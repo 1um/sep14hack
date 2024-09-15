@@ -37,7 +37,7 @@ social_search_action_metadata = ActionMetadata(
         "x-rapidapi-key": "8619b9205amsh1b57064c1ec8fdcp174354jsnbbe3c4383a1a",
         "x-rapidapi-host": "social-links-search.p.rapidapi.com",
     },
-    suggested_query_params={
+    default_query_params={
         "query": "John Smith",
         "social_networks": "facebook,tiktok,instagram,snapchat,twitter,youtube,linkedin,github,pinterest",
     },

@@ -18,8 +18,10 @@ class ActionMetadata(BaseModel):
     method: Literal["GET", "POST", "PUT", "DELETE", "PATCH"]
     headers: Optional[Dict[str, str]] = None
     query_params_schema: Optional[Dict] = None
-    body_schema: Optional[Dict] = None
+    default_query_params: Optional[Dict] = None
     suggested_query_params: Optional[Dict] = None
+    body_schema: Optional[Dict] = None
+    suggested_body: Optional[Dict] = None
 
 
 class Action(BaseModel):

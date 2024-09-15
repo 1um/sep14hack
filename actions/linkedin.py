@@ -44,7 +44,7 @@ linkedin_search_action_metadata = ActionMetadata(
         "x-rapidapi-key": "8619b9205amsh1b57064c1ec8fdcp174354jsnbbe3c4383a1a",
         "x-rapidapi-host": "linkedin-data-api.p.rapidapi.com",
     },
-    suggested_query_params={
+    default_query_params={
         "keywords": "max",
         "start": "0",
         "geo": "103644278,101165590",

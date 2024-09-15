@@ -53,10 +53,18 @@ booking_search_action = ActionMetadata(
         },
         "required": ["latitude", "longitude", "arrival_date", "departure_date"],
     },
-    suggested_query_params={
+    default_query_params={
         "latitude": "19.24232736426361",
         "longitude": "72.85841985686734",
         "arrival_date": "2024-09-25",
         "departure_date": "2024-10-02",
+        "room_qty": "1",
+        "adults": "1",
+        "children_age": "0,0",
+        "units": "imperial",
+        "page_number": "1",
+        "temperature_unit": "f",
+        "languagecode": "en-us",
+        "currency_code": "USD",
     },
 )

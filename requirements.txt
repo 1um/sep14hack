@@ -16,4 +16,5 @@ fastapi
 pydantic
 llama-index
 requests
-pdb
+openai
+asyncio

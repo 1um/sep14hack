@@ -12,14 +12,78 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding-top: 100px;
             margin: 0;
+            min-height: 100vh;
+        }
+
+        .content-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex-grow: 1;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+
+        .content-wrapper.with-results {
+            justify-content: flex-start;
+            padding-top: 20px;
         }
 
         .logo {
             font-size: 70px;
             font-weight: bold;
             margin-bottom: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .logo.small {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+
+        .logo span {
+            display: inline-block;
+            margin: 0 2px;
+        }
+
+        .logo .g {
+            color: #4285F4;
+        }
+
+        .logo .o1 {
+            color: #EA4335;
+        }
+
+        .logo .o2 {
+            color: #FBBC05;
+        }
+
+        .logo .g2 {
+            color: #34A853;
+        }
+
+        .logo .l {
+            color: #4285F4;
+        }
+
+        .logo .e {
+            color: #EA4335;
+        }
+
+        .logo .for {
+            font-size: 24px;
+            color: #5F6368;
+            margin: 0 10px;
+        }
+
+        .logo .agents {
+            font-size: 40px;
+            color: #202124;
         }
 
         .search-container {
@@ -46,6 +110,10 @@
             border-left: none;
             border-radius: 0 24px 24px 0;
             cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 100px;
         }
 
         #searchButton:hover {
@@ -53,6 +121,26 @@
             background-color: #f8f9fa;
             border-color: #dadce0;
             color: #202124;
+        }
+
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: none;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
 
         #results {
@@ -79,7 +167,7 @@
             border-radius: 10%;
         }
 
-        .action-use {
+        .action-panel {
             display: flex;
             justify-content: space-between;
             align-items: flex-end;
@@ -143,11 +231,7 @@
             font-family: monospace;
             margin-bottom: 10px;
             overflow: scroll;
-        }
-
-        .action-use {
-            display: flex;
-            justify-content: end;
+            max-height: 200px;
         }
 
         .action-price {
@@ -199,23 +283,64 @@
             font-size: 0.8em;
             font-weight: bold;
         }
+
+        .suggested-params {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+
+        .param-pill {
+            background-color: #e0e0e0;
+            border-radius: 16px;
+            padding: 4px 8px;
+            font-size: 12px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 200px;
+        }
     </style>
 </head>
 
 <body>
-    <div class="logo">Google for Agents</div>
-    <div class="search-container">
-        <textarea id="searchInput"
-            placeholder="Enter text or embedding">Young couple with dog looking for vacation in Santa Cruz, Sep 20 - Sep 30</textarea>
-        <button id="searchButton" onclick="search()">Search</button>
+    <div class="content-wrapper">
+        <div class="logo">
+            <span class="g">G</span>
+            <span class="o1">o</span>
+            <span class="o2">o</span>
+            <span class="g2">g</span>
+            <span class="l">l</span>
+            <span class="e">e</span>
+            <span class="for">for</span>
+            <span class="agents">Agents</span>
+        </div>
+        <div class="search-container">
+            <textarea id="searchInput"
+                placeholder="Text Query or User Context Embedding">Young couple with dog looking for vacation in Santa Cruz, Sep 20 - Sep 30</textarea>
+            <button id="searchButton" onclick="search()">
+                <span id="searchButtonText">Search</span>
+                <div class="loader" id="searchLoader"></div>
+            </button>
+        </div>
+        <div id="results"></div>
     </div>
-    <div id="results"></div>
 
     <script>
         let actionMap = new Map();
 
         async function search() {
+            const searchButton = document.getElementById('searchButton');
+            const searchButtonText = document.getElementById('searchButtonText');
+            const searchLoader = document.getElementById('searchLoader');
             const query = document.getElementById('searchInput').value;
+
+            // Disable button and show loader
+            searchButton.disabled = true;
+            searchButtonText.style.display = 'none';
+            searchLoader.style.display = 'inline-block';
+
             try {
                 const response = await axios.post('/query', {
                     user_context_text: query
@@ -227,71 +352,109 @@
                 displayResults(response.data);
             } catch (error) {
                 console.error('Error:', error);
+                // Display error message to user
+                document.getElementById('results').innerHTML = '<p>An error occurred while searching. Please try again.</p>';
+            } finally {
+                // Re-enable button and hide loader
+                searchButton.disabled = false;
+                searchButtonText.style.display = 'inline';
+                searchLoader.style.display = 'none';
             }
         }
 
         function displayResults(data) {
             const resultsDiv = document.getElementById('results');
-            resultsDiv.innerHTML = '<h2>Results:</h2>';
-            actionMap.clear();
+            const contentWrapper = document.querySelector('.content-wrapper');
+            const logo = document.querySelector('.logo');
 
-            data.forEach(action => {
-                actionMap.set(action.id, action);
-                const actionDiv = document.createElement('div');
-                actionDiv.className = 'action-result';
+            if (data.length > 0) {
+                contentWrapper.classList.add('with-results');
+                logo.classList.add('small');
+                // resultsDiv.innerHTML = '<h2>Results:</h2>';
+                actionMap.clear();
 
-                const teaser = action.metadata.teaser;
-                actionDiv.innerHTML = `
-                    <div class="match-score-badge">Intend match: ${action.match_score.toFixed(2)}</div>
-                    <div class="action-header">
-                        ${teaser.logo ? `<img src="${teaser.logo}" alt="Logo" class="action-logo">` : ''}
-                        <div class="action-title">
-                            <h3>${teaser.header}</h3>
-                            ${teaser.subheader ? `<h4>${teaser.subheader}</h4>` : ''}
+                data.forEach(action => {
+                    actionMap.set(action.id, action);
+                    const actionDiv = document.createElement('div');
+                    actionDiv.className = 'action-result';
+
+                    const teaser = action.metadata.teaser;
+                    actionDiv.innerHTML = `
+                        <div class="match-score-badge">Intend match: ${action.match_score.toFixed(2)}</div>
+                        <div class="action-header">
+                            ${teaser.logo ? `<img src="${teaser.logo}" alt="Logo" class="action-logo">` : ''}
+                            <div class="action-title">
+                                <h3>${teaser.header}</h3>
+                                ${teaser.subheader ? `<h4>${teaser.subheader}</h4>` : ''}
+                            </div>
                         </div>
-                    </div>
-                `;
+                    `;
 
-                if (teaser.images && teaser.images.length > 0) {
-                    const imagesDiv = document.createElement('div');
-                    imagesDiv.className = 'image-gallery';
-                    teaser.images.forEach(imageUrl => {
-                        const img = document.createElement('img');
-                        img.src = imageUrl;
-                        img.alt = 'Action image';
-                        imagesDiv.appendChild(img);
-                    });
-                    actionDiv.appendChild(imagesDiv);
-                }
+                    if (teaser.images && teaser.images.length > 0) {
+                        const imagesDiv = document.createElement('div');
+                        imagesDiv.className = 'image-gallery';
+                        teaser.images.forEach(imageUrl => {
+                            const img = document.createElement('img');
+                            img.src = imageUrl;
+                            img.alt = 'Action image';
+                            imagesDiv.appendChild(img);
+                        });
+                        actionDiv.appendChild(imagesDiv);
+                    }
 
-                const metadataDiv = document.createElement('div');
-                metadataDiv.className = 'action-metadata';
-                metadataDiv.innerHTML = `
-                    <p>URL: ${action.metadata.url}</p>
-                    <p>Method: ${action.metadata.method}</p>
-                    <p>Headers: ${JSON.stringify(action.metadata.headers || {}, null, 2)}</p>
-                    <p>Suggested Query Params: ${JSON.stringify(action.metadata.suggested_query_params || {}, null, 2)}</p>
-                    <p>Body Schema: ${JSON.stringify(action.metadata.body_schema || {}, null, 2)}</p>
-                `;
-                actionDiv.appendChild(metadataDiv);
+                    const metadataDiv = document.createElement('div');
+                    metadataDiv.className = 'action-metadata';
+                    metadataDiv.innerHTML = `
+                        <p>URL: ${action.metadata.url}</p>
+                        <p>Method: ${action.metadata.method}</p>
+                        <p>Headers: ${JSON.stringify(action.metadata.headers || {}, null, 2)}</p>
+                        <p>Default Query Params: ${JSON.stringify(action.metadata.default_query_params || {}, null, 2)}</p>
+                        <p>Schema: ${JSON.stringify(action.metadata.query_params_schema || {}, null, 2)}</p>
+                    `;
+                    if (action.metadata.body_schema) {
+                        metadataDiv.innerHTML += `<p>Body Schema: ${JSON.stringify(action.metadata.body_schema || {}, null, 2)}</p>`;
+                    }
+                    actionDiv.appendChild(metadataDiv);
 
-                const useDiv = document.createElement('div');
-                useDiv.className = 'action-use';
-                useDiv.innerHTML = `
-                    <button class="use-button" onclick="useAction('${action.id}')">
-                        <span>Use Action</span>
-                        <span class="action-price">$${action.cost_per_action}</span>
-                    </button>
-                `;
-                actionDiv.appendChild(useDiv);
+                    const actionPanel = document.createElement('div');
+                    actionPanel.className = 'action-panel';
 
-                const resultDiv = document.createElement('div');
-                resultDiv.className = 'action-result-display';
-                resultDiv.style.display = 'none';
-                actionDiv.appendChild(resultDiv);
+                    const suggestedParamsDiv = document.createElement('div');
+                    suggestedParamsDiv.className = 'suggested-params';
+                    if (action.metadata.suggested_query_params) {
+                        for (const [key, value] of Object.entries(action.metadata.suggested_query_params)) {
+                            const pill = document.createElement('span');
+                            pill.className = 'param-pill';
+                            pill.title = `${key}: ${value}`;
+                            pill.textContent = `${key}: ${value}`;
+                            suggestedParamsDiv.appendChild(pill);
+                        }
+                    }
+                    actionPanel.appendChild(suggestedParamsDiv);
 
-                resultsDiv.appendChild(actionDiv);
-            });
+                    const editButtonDiv = document.createElement('div');
+                    editButtonDiv.innerHTML = `
+                        <button class="use-button" onclick="useAction('${action.id}')">
+                            <span>Use Action</span>
+                            <span class="action-price">$${action.cost_per_action}</span>
+                        </button>
+                    `;
+                    actionPanel.appendChild(editButtonDiv);
+
+                    actionDiv.appendChild(actionPanel);
+
+                    const resultDiv = document.createElement('div');
+                    resultDiv.className = 'action-result-display';
+                    resultDiv.style.display = 'none';
+                    actionDiv.appendChild(resultDiv);
+
+                    resultsDiv.appendChild(actionDiv);
+                });
+            } else {
+                contentWrapper.classList.remove('with-results');
+                logo.classList.remove('small');
+                resultsDiv.innerHTML = '<p>No results found.</p>';
+            }
         }
 
         async function useAction(actionId) {
@@ -311,7 +474,7 @@
                     url: action.metadata.url,
                     headers: action.metadata.headers || {},
                     params: action.metadata.suggested_query_params || {},
-                    data: action.metadata.body_schema ? {} : undefined,
+                    data: action.metadata.suggested_body || undefined,
                 });
 
                 resultDiv.innerHTML = `<pre>${JSON.stringify(response.data, null, 2)}</pre>`;

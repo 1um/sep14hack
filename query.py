@@ -1,18 +1,24 @@
+import asyncio
 from typing import List, Optional
 
 from fastapi import FastAPI, HTTPException
 from llama_index.embeddings.openai import OpenAIEmbedding
+from openai import AsyncOpenAI
 from pydantic import BaseModel
-from retrieval.vector_store import ActionVectorStore
 
 from actions.airbnb import airbnb_search_action
 from actions.booking import booking_search_action
 from actions.domain import Action
-from actions.linkedin import linkedin_search_action_metadata  # Add this line
-from actions.social_search import social_search_action_metadata  # Add this line
+from actions.linkedin import linkedin_search_action_metadata
+from actions.social_search import social_search_action_metadata
 from keys import openai_api_key
+from prompts.generate_suggested_query_params import generate_suggested_query_params
+from retrieval.vector_store import ActionVectorStore
 
 app = FastAPI()
+
+# Initialize the OpenAI client
+openai_client = AsyncOpenAI(api_key=openai_api_key)
 
 # Initialize the vector store and embed model
 embed_model = OpenAIEmbedding(api_key=openai_api_key)
@@ -42,8 +48,10 @@ async def query_actions(params: QueryParams) -> List[Action]:
     # Prepare the query embedding
     if params.user_context_embedding:
         query_embedding = params.user_context_embedding
+        user_query = ""  # We don't have the original text query in this case
     elif params.user_context_text:
         query_embedding = embed_model.get_query_embedding(params.user_context_text)
+        user_query = params.user_context_text
     else:
         raise HTTPException(
             status_code=400,
@@ -63,5 +71,18 @@ async def query_actions(params: QueryParams) -> List[Action]:
         )
         for id, score in zip(query_result.ids, query_result.similarities)
     ]
+
+    # Generate suggested query parameters for each action in parallel
+    if user_query:
+        suggested_params = await asyncio.gather(
+            *[
+                generate_suggested_query_params(user_query, action)
+                for action in retrieved_actions
+            ]
+        )
+
+        # Add the suggested parameters to each action's metadata
+        for action, params in zip(retrieved_actions, suggested_params):
+            action.metadata.suggested_query_params = params
 
     return retrieved_actions
