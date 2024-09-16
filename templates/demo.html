@@ -367,11 +367,13 @@
             const contentWrapper = document.querySelector('.content-wrapper');
             const logo = document.querySelector('.logo');
 
+            // Clear previous results
+            resultsDiv.innerHTML = '';
+            actionMap.clear();
+
             if (data.length > 0) {
                 contentWrapper.classList.add('with-results');
                 logo.classList.add('small');
-                // resultsDiv.innerHTML = '<h2>Results:</h2>';
-                actionMap.clear();
 
                 data.forEach(action => {
                     actionMap.set(action.id, action);
